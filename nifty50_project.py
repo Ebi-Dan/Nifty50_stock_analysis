@@ -11,10 +11,9 @@ st.set_page_config(page_title="Nifty50 Data Explorer", layout="wide")
 st.sidebar.title("📊 Nifty50 Data Explorer")
 section = st.sidebar.radio("Choose Section", [
     "Dataset Overview",
-    "Data Shape",
-    "Missing Values",
     "Descriptive Stats",
-    "Portfolio Simulation"
+    "Portfolio Simulation",
+    "Summary"
 ])
 
 # Load data
@@ -69,12 +68,10 @@ if section == "Dataset Overview":
     The only missing values are in the HDFC.NS column, which has 24 missing entries — meaning it's entirely missing for this period.
     """)
 
-elif section == "Data Shape":
     st.subheader("Dataset Shape")
     st.write(f"Rows: {df_nifty.shape[0]}")
     st.write(f"Columns: {df_nifty.shape[1]}")
 
-elif section == "Missing Values":
     st.subheader("Missing Values")
     missing = df_nifty.isnull().sum()
     st.dataframe(missing[missing > 0] if missing.sum() > 0 else "✅ No missing values!")
@@ -126,6 +123,46 @@ elif section == "Descriptive Stats":
     st.markdown("#### 🔻 Bottom 5 Stocks by Mean Return")
     st.dataframe(summary_stats.sort_values('Mean', ascending=True).head())
 
+
+    st.title("Mean Return vs Volatility for NIFTY50 Stocks")
+
+    summary_stats_plot = summary_stats[['Mean', 'StdDev']].sort_values('Mean', ascending=False)
+
+    fig3, ax3 = plt.subplots(figsize=(16, 6))
+    summary_stats_plot.plot(kind='bar', ax=ax3)
+    ax3.set_title('Mean Return vs Volatility for NIFTY50 Stocks')
+    ax3.set_xlabel('Stocks')
+    ax3.set_ylabel('Value')
+    ax3.set_xticklabels(summary_stats_plot.index, rotation=90)
+    ax3.legend(['Mean Return', 'Volatility (StdDev)'])
+    ax3.grid(axis='y', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    st.pyplot(fig3)
+
+
+    st.title("Top & Bottom 5 Stocks by Mean Return")
+    top5 = summary_stats.sort_values('Mean', ascending=False).head(5)
+    bottom5 = summary_stats.sort_values('Mean', ascending=True).head(5)
+
+
+    fig4, ax4 = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Top 5 Barplot
+    sns.barplot(x=top5.index, y=top5['Mean'], hue=top5.index, palette='Greens_r', ax=ax4[0], legend=False)
+    ax4[0].set_title("Top 5 Stocks by Mean Return")
+    ax4[0].set_ylabel("Mean Return")
+    ax4[0].set_xlabel("Stocks")
+
+    # Bottom 5 Barplot
+    sns.barplot(x=bottom5.index, y=bottom5['Mean'], hue=bottom5.index, palette='Reds', ax=ax4[1], legend=False)
+    ax4[1].set_title("Bottom 5 Stocks by Mean Return")
+    ax4[1].set_ylabel("Mean Return")
+    ax4[1].set_xlabel("Stocks")
+
+    plt.tight_layout()
+    st.pyplot(fig4)
+
+
 elif section == "Portfolio Simulation":
     st.subheader("💼 Portfolio Simulation")
     st.markdown("Portfolio consists of: `INFY.NS`, `RELIANCE.NS`, `HDFCBANK.NS`, `TCS.NS`, `ICICIBANK.NS`")
@@ -135,14 +172,14 @@ elif section == "Portfolio Simulation":
     st.write(f"**Final Portfolio Value:** ₹{final_value:,.2f}")
 
     st.markdown("#### 📈 Portfolio Value Over Time")
-    fig3, ax3 = plt.subplots(figsize=(12, 6))
-    ax3.plot(portfolio_data['Date'], portfolio_data['portfolio_value'], color='blue')
-    ax3.set_title("Portfolio Value Over Time")
-    ax3.set_xlabel("Date")
-    ax3.set_ylabel("Portfolio Value (₹)")
-    ax3.tick_params(axis='x', rotation=45)
-    ax3.grid(alpha=0.3)
-    st.pyplot(fig3)
+    fig5, ax5 = plt.subplots(figsize=(12, 6))
+    ax5.plot(portfolio_data['Date'], portfolio_data['portfolio_value'], color='blue')
+    ax5.set_title("Portfolio Value Over Time")
+    ax5.set_xlabel("Date")
+    ax5.set_ylabel("Portfolio Value (₹)")
+    ax5.tick_params(axis='x', rotation=45)
+    ax5.grid(alpha=0.3)
+    st.pyplot(fig5)
 
     # --- Risk Analysis: Value at Risk (VaR) ---
     st.subheader("==== Value at Risk (VaR) - 95% Confidence Level ====")
@@ -171,40 +208,40 @@ elif section == "Portfolio Simulation":
 
     st.markdown("### Portfolio VaR (1-day, historical method):")
     st.write(f"Portfolio VaR = `{VaR_95_return:.4f}` ({VaR_95_return*100:.2f}%)")
-    st.write(f"Estimated 1-day potential loss: ₹ `{abs(VaR_95_rupees):,.2f}`")
+    st.write(f"Estimated 1-day potential loss: ₹`{abs(VaR_95_rupees):,.2f}`")
 
-    fig4, ax4 = plt.subplots(figsize=(10, 5))
-    sns.histplot(portfolio_returns, bins=15, kde=True, color='skyblue', ax=ax4)
-    ax4.axvline(VaR_95_return, color='red', linestyle='--', linewidth=2, label='95% VaR')
-    ax4.set_title('Portfolio Daily Returns Distribution with 95% VaR')
-    ax4.set_xlabel('Daily Return')
-    ax4.set_ylabel('Frequency')
-    ax4.legend()
-    st.pyplot(fig4)
+    fig6, ax6 = plt.subplots(figsize=(10, 5))
+    sns.histplot(portfolio_returns, bins=15, kde=True, color='skyblue', ax=ax6)
+    ax6.axvline(VaR_95_return, color='red', linestyle='--', linewidth=2, label='95% VaR')
+    ax6.set_title('Portfolio Daily Returns Distribution with 95% VaR')
+    ax6.set_xlabel('Daily Return')
+    ax6.set_ylabel('Frequency')
+    ax6.legend()
+    st.pyplot(fig6)
 
     # --- Technical Analysis: Moving Averages ---
     st.subheader("📈 Technical Analysis: Moving Averages")
     stocks_for_ta = ['TCS.NS', 'RELIANCE.NS']
 
-    fig5, axes = plt.subplots(2, 1, figsize=(12, 10))  # 2 rows, 1 col
+    fig7, ax7 = plt.subplots(2, 1, figsize=(12, 10))  
 
     for i, stock in enumerate(stocks_for_ta):
         if stock in df_nifty.columns:
             ma_7 = df_nifty[stock].rolling(window=7).mean()
             ma_14 = df_nifty[stock].rolling(window=14).mean()
 
-            axes[i].plot(df_nifty['Date'], df_nifty[stock], label=f'{stock} Price', color='blue')
-            axes[i].plot(df_nifty['Date'], ma_7, label='7-day MA', color='orange', linestyle='--')
-            axes[i].plot(df_nifty['Date'], ma_14, label='14-day MA', color='red', linestyle='-.')
-            axes[i].set_title(f'{stock} - Price with 7-day and 14-day Moving Averages')
-            axes[i].set_xlabel('Date')
-            axes[i].set_ylabel('Price (₹)')
-            axes[i].tick_params(axis='x', rotation=45)
-            axes[i].legend()
-            axes[i].grid(True, alpha=0.3)
+            ax7[i].plot(df_nifty['Date'], df_nifty[stock], label=f'{stock} Price', color='blue')
+            ax7[i].plot(df_nifty['Date'], ma_7, label='7-day MA', color='orange', linestyle='--')
+            ax7[i].plot(df_nifty['Date'], ma_14, label='14-day MA', color='red', linestyle='-.')
+            ax7[i].set_title(f'{stock} - Price with 7-day and 14-day Moving Averages')
+            ax7[i].set_xlabel('Date')
+            ax7[i].set_ylabel('Price (₹)')
+            ax7[i].tick_params(axis='x', rotation=45)
+            ax7[i].legend()
+            ax7[i].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    st.pyplot(fig5)
+    st.pyplot(fig7)
 
 
     # --- Technical Analysis: Support and Resistance ---
@@ -218,7 +255,7 @@ elif section == "Portfolio Simulation":
     reliance_ma7 = RELIANCE.rolling(window=7).mean()
     reliance_ma14 = RELIANCE.rolling(window=14).mean()
 
-    fig6, axes = plt.subplots(1, 2, figsize=(16, 6))  # 1 row, 2 cols for side-by-side
+    fig8, axes = plt.subplots(1, 2, figsize=(16, 6))  # 1 row, 2 cols for side-by-side
 
     # TCS Support/Resistance plot
     axes[0].plot(TCS.index, TCS.values, label='TCS Price', color='blue')
@@ -249,7 +286,7 @@ elif section == "Portfolio Simulation":
     axes[1].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    st.pyplot(fig6)
+    st.pyplot(fig8)
 
     st.success('Charts plotted with moving averages and support/resistance levels separately.')
 
@@ -260,13 +297,69 @@ elif section == "Portfolio Simulation":
 
     - If the short-term MA (7-day) crosses above the long-term MA (14-day), it's often seen as a **bullish signal**.
     - If it crosses below, it might suggest a **bearish trend**.
+     """)
     
-    Recommendations:
+   
+    st.title("Price Comparison: TCS vs RELIANCE")
 
-    1. Keep reviewing your strategy — this approach earned a small gain with low volatility.
-    2. Watch RELIANCE — it may continue to perform well.
-    3. Consider adjusting your TCS holdings if weakness persists.
-    4. Be careful with very volatile stocks — they're better for short-term opportunities.
-    5. Use stop-loss orders and protective strategies to manage risk.
-    6. Rebalance your portfolio regularly to stay aligned with your risk profile and market shifts.
-    """)
+    fig9, ax9 = plt.subplots(figsize=(12, 6))
+    ax9.plot(TCS.index, TCS.values, label='TCS', color='blue')
+    ax9.plot(RELIANCE.index, RELIANCE.values, label='RELIANCE', color='green')
+    ax9.set_title('Price Comparison: TCS vs RELIANCE')
+    ax9.set_xlabel('Date')
+    ax9.set_ylabel('Price (₹)')
+    ax9.legend()
+    ax9.grid(True, alpha=0.3)
+    st.pyplot(fig9)
+
+
+elif section == "Summary": 
+      st.subheader("SUMMARY")
+      st.write("TOP 3 MOST VOLATILE STOCKS (Biggest daily price changes)")
+      most_volatile = std_prices.sort_values(ascending=False).head(3)
+
+      f"""
+        1. {most_volatile.index[0]}: ₹{most_volatile.iloc[0]:.2f} average daily price movement
+        2. {most_volatile.index[1]}: ₹{most_volatile.iloc[1]:.2f} average daily price movement
+        3. {most_volatile.index[2]}: ₹{most_volatile.iloc[2]:.2f} average daily price movement
+
+        Key Points:
+
+        Compared to the most volatile stock (like {most_volatile.index[0]} with ₹{most_volatile.iloc[0]:.2f} daily swings), the portfolio had much smaller ups and downs but still achieved a positive return.
+
+        The stock with the smallest daily price change, TATASTEEL.NS, moves about ₹1.89 per day, which means it's relatively stable but offers slower growth potential.
+
+        Even though the portfolio had many different stocks (diversified), it managed a modest gain. This shows that diversification can reduce risk while still capturing growth — though stock selection and weightings remain very important.
+
+        Technical Update:
+
+            - TCS is trading below its short-term average prices → short-term outlook is weak.
+            - RELIANCE is trading above its short-term average prices → short-term outlook is strong.
+
+        Portfolio Performance Compared to Individual Stocks:
+
+        - Average daily gain: 0.12%
+        - Daily ups and downs (volatility): 0.63%
+        - Final Portfolio Value: ₹1,026,914.15
+        - Overall return in 24 days: +2.69%
+
+        The top 3 most volatile stocks had much bigger daily price changes than the portfolio. These stocks may offer higher 
+        short-term profits, but they also come with higher risks.
+
+        TATASTEEL.NS appears to be the most stable stock in this group.
+
+        Diversifying helped limit risk. However, how well the portfolio performs still depends on:
+        - Which stocks are chosen
+        - How much is invested in each
+        - And the overall market conditions
+
+         Recommendations:
+
+        1. Keep reviewing your strategy — this approach earned a small gain with low volatility.
+        2. Watch RELIANCE — it may continue to perform well.
+        3. Consider adjusting your TCS holdings if weakness persists.
+        4. Be careful with very volatile stocks — they're better for short-term opportunities.
+        5. Use stop-loss orders and protective strategies to manage risk.
+        6. Rebalance your portfolio regularly to stay aligned with your risk profile and market shifts.
+    
+        """
