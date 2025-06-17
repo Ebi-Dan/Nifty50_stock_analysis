@@ -363,3 +363,5 @@ elif section == "Summary":
         6. Rebalance your portfolio regularly to stay aligned with your risk profile and market shifts.
     
         """
+
+st.write("You can view the link to the code of the project here: https://drive.google.com/file/d/1ZfUYxDN4N5kuoWA1WmuGvXzG-7_y1T9S/view?usp=sharing")
